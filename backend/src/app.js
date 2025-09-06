@@ -18,13 +18,15 @@ const io = connectToSocket(server);
 // PORT from environment or fallback
 const PORT = process.env.PORT || 8000;
 
-// FRONTEND URL from environment
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://proconnect-x0ok.onrender.com";
+// FRONTEND URL from environment (set on Render)
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://proconnect-frontend-3i5q.onrender.com";
+
+app.set("port", PORT);
 
 // CORS: allow frontend and localhost
 app.use(cors({
-  origin: [FRONTEND_URL, "http://localhost:3000"],
-  credentials: true,
+  origin: [FRONTEND_URL, "http://localhost:3000"], // allow production frontend & localhost
+  credentials: true
 }));
 
 app.use(express.json({ limit: "40kb" }));
@@ -41,7 +43,9 @@ const start = async () => {
     const connectionDb = await mongoose.connect(mongoUri);
     console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
 
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    server.listen(PORT, () => {
+      console.log(`LISTENING ON PORT ${PORT}`);
+    });
   } catch (err) {
     console.error("Failed to start server:", err);
     process.exit(1);
