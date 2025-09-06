@@ -7,30 +7,29 @@ import userRoutes from "./routes/users.routes.js";
 import { connectToSocket } from "./controllers/socketManager.js";
 import dotenv from "dotenv";
 
-dotenv.config(); // <-- load environment variables from process.env
+dotenv.config(); // Load .env variables
 
 const app = express();
 const server = createServer(app);
 
-// socket setup (unchanged)
+// Socket setup
 const io = connectToSocket(server);
 
-// PORT from Render or fallback to 8000
+// PORT from environment or fallback
 const PORT = process.env.PORT || 8000;
 
-// FRONTEND URL(s) — update to your actual rendered frontend URL
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://proconnect-1.onrender.com";
+// FRONTEND URL from environment
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://proconnect-x0ok.onrender.com";
 
 app.set("port", PORT);
 
-// CORS: allow the deployed frontend and localhost (for dev)
+// CORS: allow frontend and localhost
 app.use(cors({
   origin: (origin, callback) => {
-    // allow requests with no origin (like curl, server-to-server)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // server-to-server or curl
     const allowed = [FRONTEND_URL, "http://localhost:3000"];
     if (allowed.includes(origin)) return callback(null, true);
-    return callback(new Error("CORS not allowed by server"), false);
+    return callback(new Error("CORS not allowed"), false);
   },
   credentials: true,
 }));
@@ -38,20 +37,15 @@ app.use(cors({
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
 
-// your API routes
+// API routes
 app.use("/api/v1/users", userRoutes);
 
 const start = async () => {
   try {
-    // Use MONGO_URI from environment
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) throw new Error("MONGO_URI is not set in environment");
-    const connectionDb = await mongoose.connect(mongoUri, {
-      // options (mongoose v6/v7 don't require these, but safe)
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
 
+    const connectionDb = await mongoose.connect(mongoUri);
     console.log(`MONGO Connected DB Host: ${connectionDb.connection.host}`);
 
     server.listen(PORT, () => {
@@ -59,7 +53,7 @@ const start = async () => {
     });
   } catch (err) {
     console.error("Failed to start server:", err);
-    process.exit(1); // crash so Render shows an error
+    process.exit(1);
   }
 };
 
